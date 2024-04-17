@@ -20,7 +20,11 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
+
+    path('admin/', include('adminApp.urls')),
+    path('ordinary/', include('ordinaryApp.urls')),
+
     path('user/', include('userApp.urls')),
     path('main/', include('mainApp.urls')),
 
