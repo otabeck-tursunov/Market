@@ -47,6 +47,7 @@ REST_FRAMEWORK = {
 }
 
 SWAGGER_SETTINGS = {
+    'DEFAULT_API_URL': '',
     'SECURITY_DEFINITIONS': {
         'Bearer': {
             'type': 'apiKey',
