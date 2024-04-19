@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from eskiz.client import SMSClient
-from twilio.rest import Client
 
 from Market import settings
 from .serializers import *
