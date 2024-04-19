@@ -1,3 +1,5 @@
+from django.db.models import Q
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import *
@@ -34,10 +36,30 @@ class ProfileDetailsAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class CategoriesAPIView(APIView):
-    permission_classes = (IsManagerUser, IsSuperUser,)
+    permission_classes = (IsManagerOrSuperUser,)
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description='filter by ID',
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='search by title',
+            ),
+        ]
+    )
     def get(self, request):
         categories = Category.objects.all()
+        if request.query_params.get('id'):
+            categories = categories.filter(id=request.query_params.get('id'))
+        if request.query_params.get('search'):
+            categories = categories.filter(title__icontains=request.query_params.get('search'))
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
@@ -52,11 +74,56 @@ class CategoriesAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductsAPIView(APIView):
-    permission_classes = (IsManagerUser, IsSuperUser,)
+class CategoryDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
+
+class ProductsAPIView(APIView):
+    permission_classes = (IsManagerOrSuperUser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description='filter by ID',
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='search by name, brand, country, color, category',
+            ),
+            openapi.Parameter(
+                name='discount',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                description='filter by discount',
+            ),
+
+        ]
+    )
     def get(self, request):
         products = Product.objects.all()
+        if request.query_params.get('id'):
+            products = Product.objects.filter(id=request.query_params.get('id'))
+        if request.query_params.get('search'):
+            search = request.query_params.get('search')
+            products = Product.objects.filter(
+                Q(name__icontains=search) |
+                Q(brand__icontains=search) |
+                Q(country__icontains=search) |
+                Q(color__icontains=search) |
+                Q(category__title__icontains=search)
+            )
+        if request.query_params.get('discount') is not None:
+            if request.query_params.get('discount') == 'true':
+                products = products.filter(discount__gt=0)
+            else:
+                products = products.filter(discount=0)
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
@@ -69,3 +136,83 @@ class ProductsAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+class ProductImagesAPIView(APIView):
+    permission_classes = (IsManagerOrSuperUser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='product_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='filter by Product ID',
+            )
+        ]
+    )
+    def get(self, request):
+        images = ProductImage.objects.all()
+        if request.query_params.get('product_id'):
+            images = images.filter(product__id=request.query_params.get('product_id'))
+        serializer = ProductImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=ProductImageSerializer
+    )
+    def post(self, request):
+        serializer = ProductImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductImageDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
+
+
+class ProductPropertiesAPIView(APIView):
+    permission_classes = (IsManagerOrSuperUser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='product_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='filter by Product ID',
+            )
+        ]
+    )
+    def get(self, request):
+        properties = ProductProperty.objects.all()
+        if request.query_params.get('product_id'):
+            properties = properties.filter(product__id=request.query_params.get('product_id'))
+        serializer = ProductPropertySerializer(properties, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=ProductPropertySerializer
+    )
+    def post(self, request):
+        serializer = ProductPropertySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductPropertyDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = ProductProperty.objects.all()
+    serializer_class = ProductPropertySerializer
