@@ -49,42 +49,6 @@ from .models import *
 #             )
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#
-# class RegisterAPIView(APIView):
-#     @swagger_auto_schema(
-#         request_body=ProfileRegisterSerializer,
-#     )
-#     def post(self, request):
-#         serializer = ProfileRegisterSerializer(data=request.data)
-#         if serializer.is_valid():
-#             client = Client("AC3467a4f060e69eec7630f9b4babe8e61", "22cca1f90a43073be018f59f31bbc3e7")
-#
-#             confirmation_code = str(random.randint(111111, 999999))
-#             phone_number = serializer.validated_data['phone_number']
-#
-#             try:
-#                 message = client.messages.create(
-#                     body=f"Your confirmation code is: {confirmation_code}",
-#                     from_='+998200123435',  # Your Twilio phone number
-#                     to=phone_number
-#                 )
-#
-#                 profile = Profile.objects.create_user(
-#                     username=serializer.validated_data['phone_number'],
-#                     phone_number=serializer.validated_data['phone_number'],
-#                     password=serializer.validated_data['password'],
-#                     confirmation_code=confirmation_code,
-#                 )
-#
-#                 return Response({
-#                     "success": True,
-#                     "message": "User registered successfully. Please verify your phone number."
-#                 }, status=status.HTTP_201_CREATED)
-#             except Exception as e:
-#                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#
 # class ConfirmAPIView(APIView):
 #     permission_classes = (IsOrdinaryUnconfirmedUser,)
 #
