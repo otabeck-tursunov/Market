@@ -1,16 +1,36 @@
 from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.generics import *
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from mainApp.models import *
 from mainApp.serializers import *
+from orderApp.models import Cart, CartItem, Order, OrderItem
+from orderApp.serializers import CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer
 from userApp.serializers import *
 from userApp.models import Profile
 from userApp.permissions import *
+
+
+class NewsAPIView(ListCreateAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('id', 'title', 'content')
+
+
+class NewsDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    serializer_class = NewsSerializer
+    queryset = News.objects.all()
+
+
 
 
 class ProfilesAPIView(APIView):
@@ -216,3 +236,65 @@ class ProductPropertyDetailsAPIView(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsManagerOrSuperUser,)
     queryset = ProductProperty.objects.all()
     serializer_class = ProductPropertySerializer
+
+
+# Order and Cart section
+
+class CartsAPIView(ListCreateAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('user__id', 'id')
+
+
+class CartDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+
+
+class CartItemsAPIView(ListCreateAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('cart__id', 'id')
+
+
+class CartItemDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+
+class OrdersAPIView(ListCreateAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('user__id', 'id')
+
+
+class OrderDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+
+class OrderItemsAPIView(ListCreateAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('order__id', 'id')
+
+
+class OrderItemDetailsAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsManagerOrSuperUser,)
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
