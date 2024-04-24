@@ -19,7 +19,7 @@ class ProfileManagerSerializer(ModelSerializer):
     class Meta:
         model = Profile
         fields = (
-            'id', 'username', 'first_name', 'last_name', 'phone_number', 'role', 'is_superuser', 'phone_number',
+            'id', 'username', 'first_name', 'last_name', 'phone_number', 'role', 'phone_number',
             'gender', 'image', 'birth_date', 'address', 'date_joined'
         )
 
@@ -34,9 +34,11 @@ class ProfileOrdinarySerializer(ModelSerializer):
     class Meta:
         model = Profile
         fields = (
-            'id', 'username', 'first_name', 'last_name', 'phone_number', 'role', 'is_superuser', 'phone_number',
+            'id', 'username', "password", 'first_name', 'last_name', 'phone_number', 'role', 'phone_number',
             'gender', 'image', 'birth_date', 'address', 'date_joined'
         )
+
+        extra_kwargs = {'password': {'write_only': True, 'min_length': 6, 'max_length': 24}}
 
     def create(self, validated_data):
         profile = Profile.objects.create_user(**validated_data)

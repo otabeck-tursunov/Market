@@ -102,5 +102,7 @@ john.chiqim(10, "Tushlik")
 john.chiqim(150, "Kiyim-kechak")
 john.chiqim(3000, "Sayohat uchun")
 
-print(john.eng_katta_kirim())
-print(john.statistika())
+# print(john.eng_katta_kirim())
+# print(john.statistika())
+
+
