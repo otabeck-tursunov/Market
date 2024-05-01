@@ -23,5 +23,9 @@ class Profile(AbstractUser):
     # confirmation_code = models.CharField(max_length=6, blank=True, null=True)
     # confirmed = models.BooleanField(default=False)
 
+    class Meta:
+        verbose_name = 'Profile'
+        verbose_name_plural = 'Profiles'
+
     def __str__(self):
         return self.username

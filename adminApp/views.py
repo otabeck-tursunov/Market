@@ -31,8 +31,6 @@ class NewsDetailsAPIView(RetrieveUpdateDestroyAPIView):
     queryset = News.objects.all()
 
 
-
-
 class ProfilesAPIView(APIView):
     permission_classes = (IsSuperUser,)
 
@@ -41,6 +39,9 @@ class ProfilesAPIView(APIView):
         serializer = ProfileSerializer(profiles, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        request_body=ProfileSerializer,
+    )
     def post(self, request):
         serializer = ProfileSerializer(data=request.data)
         if serializer.is_valid():

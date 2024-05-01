@@ -6,4 +6,15 @@ urlpatterns = [
     path('profile/details/',  ProfileDetailsAPIView.as_view()),
     path('profile/update/',  ProfileUpdateAPIView.as_view()),
     path('profile/delete/',  ProfileDeleteAPIView.as_view()),
+
+    path('profile/cart/products/', CartItemsAPIView.as_view()),
+    path('profile/cart/products/<int:pk>/', CartItemRetrieveAPIView.as_view()),
+    path('profile/cart/products/<int:pk>/update/', CartItemUpdateAPIView.as_view()),
+    path('profile/cart/products/<int:pk>/delete/', CartItemDeleteAPIView.as_view()),
+
+    path('categories/', CategoriesAPIView.as_view()),
+    path('categories/<int:pk>/', CategoryDetailsAPIView.as_view()),
+    path('products/', ProductsAPIView.as_view()),
+    path('products/<int:pk>/', ProductDetailsAPIView.as_view()),
+
 ]
