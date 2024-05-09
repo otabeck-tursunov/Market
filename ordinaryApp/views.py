@@ -92,7 +92,11 @@ class CartItemRetrieveAPIView(RetrieveAPIView):
     serializer_class = CartItemSerializer
 
     def get_queryset(self):
-        return CartItem.objects.filter(cart=Cart.objects.get(user=self.request.user))
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            cartItems = CartItem.objects.filter(cart__user__id=user.id)
+            return cartItems
+        return CartItem.objects.filter(id=0)
 
 
 class CartItemUpdateAPIView(UpdateAPIView):
@@ -100,7 +104,11 @@ class CartItemUpdateAPIView(UpdateAPIView):
     serializer_class = CartItemPostSerializer
 
     def get_queryset(self):
-        return CartItem.objects.filter(cart=Cart.objects.get(user=self.request.user))
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            cartItems = CartItem.objects.filter(cart__user__id=user.id)
+            return cartItems
+        return CartItem.objects.filter(id=0)
 
     def perform_update(self, serializer):
         cartItem = CartItem.objects.get(pk=self.kwargs['pk'])
@@ -114,7 +122,11 @@ class CartItemDeleteAPIView(DestroyAPIView):
     serializer_class = CartItemSerializer
 
     def get_queryset(self):
-        return CartItem.objects.filter(cart=Cart.objects.get(user=self.request.user))
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            cartItems = CartItem.objects.filter(cart__user__id=user.id)
+            return cartItems
+        return CartItem.objects.filter(id=0)
 
 
 # Categories
