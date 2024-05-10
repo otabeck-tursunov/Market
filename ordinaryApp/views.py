@@ -9,8 +9,8 @@ from rest_framework.permissions import *
 
 from mainApp.models import Category, Product
 from mainApp.serializers import CategorySerializer, ProductSerializer
-from orderApp.models import Cart, CartItem
-from orderApp.serializers import CartItemSerializer, CartItemPostSerializer
+from orderApp.models import Cart, CartItem, Order, OrderItem
+from orderApp.serializers import CartItemSerializer, CartItemPostSerializer, OrderSerializer
 from userApp.models import Profile
 from userApp.permissions import IsOrdinaryUser
 from userApp.serializers import ProfileSerializer, ProfileOrdinarySerializer
@@ -79,10 +79,17 @@ class CartItemsAPIView(APIView):
         serializer = CartItemSerializer(cart_items, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        request_body=CartItemPostSerializer,
+    )
     def post(self, request):
         serializer = CartItemPostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(cart=Cart.objects.get(user=request.user))
+            cart = Cart.objects.filter(user=request.user)
+            if not cart.exists():
+                Cart.objects.create(user=request.user)
+                cart = Cart.objects.filter(user=request.user)
+            serializer.save(cart=cart.first())
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -110,6 +117,9 @@ class CartItemUpdateAPIView(UpdateAPIView):
             return cartItems
         return CartItem.objects.filter(id=0)
 
+    @swagger_auto_schema(
+        request_body=CartItemSerializer
+    )
     def perform_update(self, serializer):
         cartItem = CartItem.objects.get(pk=self.kwargs['pk'])
         cartItem.amount = serializer.validated_data['amount']
@@ -127,6 +137,61 @@ class CartItemDeleteAPIView(DestroyAPIView):
             cartItems = CartItem.objects.filter(cart__user__id=user.id)
             return cartItems
         return CartItem.objects.filter(id=0)
+
+
+# Orders
+class OrdersAPIView(APIView):
+    permission_classes = (IsOrdinaryUser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='status',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=['pending', 'canceled', 'confirmed', 'paid', 'done']
+            )
+        ]
+    )
+    def get(self, request):
+        orders = Order.objects.filter(user=request.user)
+        status = request.query_params.get('status', None)
+        if status is not None:
+            orders = orders.filter(status=status)
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
+
+
+class OrderCreateAPIView(APIView):
+    permission_classes = (IsOrdinaryUser,)
+
+    def post(self, request):
+        cart = Cart.objects.filter(user=request.user)
+        if not cart.exists():
+            Cart.objects.create(user=request.user)
+        cartItems = CartItem.objects.filter(cart__user__id=request.user.id)
+        if cartItems.exists():
+            order = Order.objects.create(
+                user=request.user,
+                status='pending',
+                total_price=0
+            )
+            for cartItem in cartItems:
+                orderItem = OrderItem.objects.create(
+                    order=order,
+                    product=cartItem.product,
+                    amount=cartItem.amount,
+                )
+                order.total_price += orderItem.amount * orderItem.product.price
+                order.save()
+            CartItem.objects.filter(cart__user__id=request.user.id).delete()
+            serializer = OrderSerializer(order)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response({
+            "success": False,
+            "message": "Cart is empty"
+        })
 
 
 # Categories

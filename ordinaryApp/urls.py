@@ -12,6 +12,9 @@ urlpatterns = [
     path('profile/cart/products/<int:pk>/update/', CartItemUpdateAPIView.as_view()),
     path('profile/cart/products/<int:pk>/delete/', CartItemDeleteAPIView.as_view()),
 
+    path('profile/orders/', OrdersAPIView.as_view()),
+    path('profile/order-create/', OrderCreateAPIView.as_view()),
+
     path('categories/', CategoriesAPIView.as_view()),
     path('categories/<int:pk>/', CategoryDetailsAPIView.as_view()),
     path('products/', ProductsAPIView.as_view()),
