@@ -7,8 +7,8 @@ from rest_framework.generics import *
 from rest_framework.response import Response
 from rest_framework.permissions import *
 
-from mainApp.models import Category, Product
-from mainApp.serializers import CategorySerializer, ProductSerializer
+from mainApp.models import Category, Product, News
+from mainApp.serializers import CategorySerializer, ProductSerializer, NewsSerializer
 from orderApp.models import Cart, CartItem, Order, OrderItem
 from orderApp.serializers import CartItemSerializer, CartItemPostSerializer, OrderSerializer
 from userApp.models import Profile
@@ -298,3 +298,9 @@ class ProductDetailsAPIView(RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny, ]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+
+class NewsListAPIView(ListAPIView):
+    permission_classes = [AllowAny, ]
+    queryset = News.objects.order_by('-id')
+    serializer_class = NewsSerializer
