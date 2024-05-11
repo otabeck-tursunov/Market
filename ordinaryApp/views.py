@@ -304,3 +304,10 @@ class NewsListAPIView(ListAPIView):
     permission_classes = [AllowAny, ]
     queryset = News.objects.order_by('-id')
     serializer_class = NewsSerializer
+
+
+class NewsDetailsAPIView(RetrieveAPIView):
+    permission_classes = (AllowAny, )
+    queryset = News.objects.all()
+    serializer_class = NewsSerializer
+

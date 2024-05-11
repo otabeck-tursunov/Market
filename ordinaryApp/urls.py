@@ -22,5 +22,6 @@ urlpatterns = [
     path('products/<int:pk>/', ProductDetailsAPIView.as_view()),
 
     path('news/', NewsListAPIView.as_view()),
+    path('news/<int:pk>/', NewsDetailsAPIView.as_view()),
 
 ]
