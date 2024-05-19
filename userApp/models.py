@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+
+from coreApp.models import CoreModel
+from mainApp.models import Product
 
 
 class Profile(AbstractUser):
@@ -30,3 +34,21 @@ class Profile(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class ProductLike(CoreModel):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='liked_profiles')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='liked_products')
+
+    class Meta:
+        unique_together = (('product', 'profile'),)
+
+
+class ProductRate(CoreModel):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='rated_profiles')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='rated_products')
+    rate = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = (('product', 'profile'),)

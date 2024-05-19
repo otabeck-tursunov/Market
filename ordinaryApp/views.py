@@ -1,7 +1,8 @@
-from django.db.models import Q
+from django.db.models import Q, Avg
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, filters
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from rest_framework.generics import *
 from rest_framework.response import Response
@@ -14,6 +15,7 @@ from orderApp.serializers import CartItemSerializer, CartItemPostSerializer, Ord
 from userApp.models import Profile
 from userApp.permissions import IsOrdinaryUser
 from userApp.serializers import ProfileSerializer, ProfileOrdinarySerializer
+from userApp.serializers import *
 
 
 class ProfileCreateAPIView(APIView):
@@ -248,6 +250,7 @@ class CategoryDetailsAPIView(RetrieveUpdateDestroyAPIView):
 
 class ProductsAPIView(APIView):
     permission_classes = (AllowAny,)
+    pagination_class = PageNumberPagination
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -273,7 +276,7 @@ class ProductsAPIView(APIView):
         ]
     )
     def get(self, request):
-        products = Product.objects.all()
+        products = Product.objects.order_by('id')
         if request.query_params.get('id'):
             products = Product.objects.filter(id=request.query_params.get('id'))
         if request.query_params.get('search'):
@@ -290,8 +293,11 @@ class ProductsAPIView(APIView):
                 products = products.filter(discount__gt=0)
             else:
                 products = products.filter(discount=0)
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
+
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products, request)
+        serializer = ProductSerializer(paginated_products, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ProductDetailsAPIView(RetrieveUpdateDestroyAPIView):
@@ -307,7 +313,54 @@ class NewsListAPIView(ListAPIView):
 
 
 class NewsDetailsAPIView(RetrieveAPIView):
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
     queryset = News.objects.all()
     serializer_class = NewsSerializer
 
+
+class ProductLikeAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        liked_products = ProductLike.objects.filter(profile=request.user)
+        serializer = ProductLikeSerializer(liked_products, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=ProductLikePostSerializer
+    )
+    def post(self, request):
+        serializer = ProductLikePostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(profile=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductDislikeAPIView(APIView):
+    permission_classes = (IsOrdinaryUser,)
+
+    def delete(self, request, id):
+        liked_product = get_object_or_404(ProductLike, profile=request.user, id=id)
+        liked_product.delete()
+        return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductRatePostAPIView(APIView):
+    permission_classes = (IsOrdinaryUser,)
+
+    @swagger_auto_schema(
+        request_body=ProductRatePostSerializer
+    )
+    def post(self, request):
+        serializer = ProductRatePostSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save(profile=request.user)
+                product = Product.objects.get(id=serializer.data['product'])
+                product.rating = Avg(ProductRate.objects.filter(product=product).values_list('rate', flat=True))
+                product.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"success": False, "message": "Alredy exists!"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,8 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
+
+from mainApp.models import ProductImage
+from mainApp.serializers import ProductImageSerializer
 from .models import *
 
 
@@ -46,6 +49,7 @@ class ProfileOrdinarySerializer(ModelSerializer):
         profile.save()
         return profile
 
+
 #
 # class ProfileRegisterSerializer(serializers.Serializer):
 #     phone_number = serializers.CharField(max_length=15, min_length=9)
@@ -54,3 +58,46 @@ class ProfileOrdinarySerializer(ModelSerializer):
 #
 # class ProfileConfirmSerializer(serializers.Serializer):
 #     confirmation_code = serializers.CharField(max_length=6, min_length=6)
+
+
+class ProductForLikeSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('id', 'name', 'price', 'brand')
+
+    def to_representation(self, instance):
+        product = super(ProductForLikeSerializer, self).to_representation(instance)
+        images = ProductImage.objects.filter(product=instance).first()
+        serializer = ProductImageSerializer(images)
+        product.update(
+            {
+                'image': serializer.data.get('image'),
+            }
+        )
+        return product
+
+
+class ProductLikeSerializer(ModelSerializer):
+    product = ProductForLikeSerializer()
+
+    class Meta:
+        model = ProductLike
+        fields = ('id', 'product')
+
+
+class ProductLikePostSerializer(ModelSerializer):
+    class Meta:
+        model = ProductLike
+        fields = ('id', 'product')
+
+
+class ProductRateSerializer(ModelSerializer):
+    class Meta:
+        model = ProductRate
+        fields = "__all__"
+
+
+class ProductRatePostSerializer(ModelSerializer):
+    class Meta:
+        model = ProductRate
+        fields = ('id', 'product', 'rate', 'comment')

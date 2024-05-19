@@ -24,4 +24,8 @@ urlpatterns = [
     path('news/', NewsListAPIView.as_view()),
     path('news/<int:pk>/', NewsDetailsAPIView.as_view()),
 
+    path('products/liked/', ProductLikeAPIView.as_view()),
+    path('products/liked/<int:id>/delete/', ProductDislikeAPIView.as_view()),
+    path('products/rate/', ProductRatePostAPIView.as_view()),
+
 ]
