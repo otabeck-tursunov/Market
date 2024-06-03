@@ -248,9 +248,14 @@ class CategoryDetailsAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
 
 
+class ProductsPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class ProductsAPIView(APIView):
     permission_classes = (AllowAny,)
-    pagination_class = PageNumberPagination
+    pagination_class = ProductsPagination
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -258,30 +263,41 @@ class ProductsAPIView(APIView):
                 name='id',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
-                description='filter by ID',
+                description='Filter by ID',
             ),
             openapi.Parameter(
                 name='search',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
-                description='search by name, brand, country, color, category',
+                description='Search by name, brand, country, color, category',
             ),
             openapi.Parameter(
                 name='discount',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_BOOLEAN,
-                description='filter by discount',
+                description='Filter by discount',
             ),
-
+            openapi.Parameter(
+                name='page',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description='Page number',
+            ),
+            openapi.Parameter(
+                name='page_size',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description='Number of items per page',
+            ),
         ]
     )
     def get(self, request):
         products = Product.objects.order_by('id')
         if request.query_params.get('id'):
-            products = Product.objects.filter(id=request.query_params.get('id'))
+            products = products.filter(id=request.query_params.get('id'))
         if request.query_params.get('search'):
             search = request.query_params.get('search')
-            products = Product.objects.filter(
+            products = products.filter(
                 Q(name__icontains=search) |
                 Q(brand__icontains=search) |
                 Q(country__icontains=search) |
